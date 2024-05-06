@@ -235,6 +235,8 @@ const ViewUserProfile = () => {
     // toHome
     const toHome = () => navigate(`/all_tweets/${currentUserId}`)
 
+    const toFollowingFeed = () => navigate(`/following_feed/${currentUserId}/${otherUserId}`)
+
     // follow/unfollow function
     const followAndUnfollow= () => {
         const pendingCurrentUser = {...currentUser}
@@ -289,7 +291,8 @@ const ViewUserProfile = () => {
                             <div style={{backgroundColor: 'white', marginBottom: '30px', padding: '20px', borderRadius: '20px'}} key={tweet._id} onMouseOver={() => hoverOverTweetToEdit(tweet)}> {/*The tweet*/}
                                 <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '-20px'}}> {/*top row */}
                                     <button style={{display: 'flex', backgroundColor: 'white', border: 'white', alignItems: 'center'}} onClick={() => toTweeterProfile(tweet.user_id)}>
-                                        <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>
+                                        {tweet.user_id == currentUserId && <img style={{height: '40px', width: '40px', border: '2px solid gold', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
+                                        {tweet.user_id !== currentUserId && <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
                                         <p style={{color: 'blue', fontSize: '30px'}}>{tweet.username}</p>
                                     </button>
                                     <button style={{height: '30px', borderRadius: '30px', marginTop: '20px', marginLeft: '20px', color: 'blue'}} onClick={() => toTweet(tweet._id)}>View Tweet</button>
@@ -459,7 +462,7 @@ const ViewUserProfile = () => {
                 {/* comment text */}
                 </div>
                 {/* right side bar: */}
-                <div style={{color: 'blue', backgroundColor: 'white', width: '140px', height: '400px', display: 'flex', marginTop: '20px', borderRadius: '15px', border: '2px solid black', flexDirection: 'column', alignItems: 'center'}}>
+                <div style={{color: 'blue', backgroundColor: 'white', width: '140px', height: '430px', display: 'flex', marginTop: '20px', borderRadius: '15px', border: '2px solid black', flexDirection: 'column', alignItems: 'center'}}>
                 {/* logout button */}
                     <button style={{marginBottom: '15px', marginTop: '20px', width: '70px', height: '30px', color:'blue', borderRadius: '15px'}} onClick={() => logout()}>Log Out</button>
                 {/* other user's username */}
@@ -481,11 +484,13 @@ const ViewUserProfile = () => {
                         <button style={{height: '30px', color: 'blue', borderRadius: '15px'}} onClick={() => toNewTweet()}>New Tweet</button>
                     }
             {/* if(currentUserId !== otherUserId) follow buttton*/}
-                    <div> {/*Follow/Unfollow button*/}
+                    <div style={{marginBottom: '20px'}}> {/*Follow/Unfollow button*/}
                         {currentUserId !== otherUserId && 
                             (amIfollowingTheSelectedUser ? (<button style={{height: '30px', color: 'white', backgroundColor: 'red', borderRadius: '15px'}} onClick={() => followAndUnfollow()}>Unfollow</button>) : (<button style={{height: '30px', color: 'blue', borderRadius: '15px'}} onClick={() => followAndUnfollow()}>Follow</button>))
                         }
                     </div>
+                    {currentUserId == otherUserId && <button style={{height: '30px', color: 'blue', borderRadius: '15px'}} onClick={() => toFollowingFeed()}>My Feed</button>}
+                    {currentUserId !== otherUserId && <button style={{height: '30px', color: 'blue', borderRadius: '15px'}} onClick={() => toFollowingFeed()}>User Feed</button>}
                 </div>
             </div>
         </div>

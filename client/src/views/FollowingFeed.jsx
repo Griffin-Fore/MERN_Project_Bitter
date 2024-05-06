@@ -1,92 +1,120 @@
-import React, { useEffect, useState } from "react"
+import React, {useEffect, useState } from "react"
 import axios from 'axios'
-import { useNavigate, useParams } from 'react-router-dom';
+import {useNavigate, useParams } from 'react-router-dom';
 
-const ViewAllTweets = () => {
+const FollowingFeed = () => {
     const navigate = useNavigate();
-    const { currentUserId } = useParams();
-    // current_user /
-    const [currentUser, setCurrentUser ] = useState({})
-    // BONUS: all users postman and put in state
-    // filter all users based on users im following
-    const [allUsersImFollowing, setAllUsersImFollowing ] = useState([])
-    // get all tweets from postman and put in state
-    // all tweets, ordered by most recent
+
+    const {currentUserId, otherUserId} = useParams()
+
+    const [currentUser, setCurrentUser] = useState({})
+    const [otherUser, setOtherUser] = useState({})
+    const [allUsersTheOtherUserIsFollowing, setAllUsersTheOtherUserIsFollowing] = useState([])
+    const [amIfollowingTheSelectedUser, setAmIfollowingTheSelectedUser] = useState()
     const [allTweetsSortedByNewest, setAllTweetsSortedByNewest] = useState([])
-
-    const [isTweetEditPopupOpen, setIsTweetEditPopupOpen] = useState(false)
-    const[imageURL, setImageURL] = useState("")
+    const [imageURL, setImageURL] = useState("")
     const [isImagePopupOpen, setIsImagePopupOpen] = useState(false)
+    const [tweetToEdit, setTweetToEdit] = useState({})
 
-    const [tweetToEdit, setTweetToEdit] = useState({}) // for liking, disliking and retweeting
-
-    const [isCommentPopupOpen, setIsCommentPopupOpen] = useState(false)
-    const [pendingComment, setPendingComment] = useState({})
-    const [pendingCommentErrors, setPendingCommentErrors ] = useState()
-
+    // useEffect get current user, dependency currentUserId, otherUserId
     useEffect(() => {
         axios.get(`http://localhost:8000/api/users/${currentUserId}`)
         .then((res) => {
-            console.log("ViewAllTweets getOneUser res.data: ", res.data)
+            console.log("FollowingFeed.jsx getCurrentUser then res.data: ", res.data)
             setCurrentUser(res.data)
+            const isFollowing = currentUser.users_im_following.includes(otherUserId)
+            setAmIfollowingTheSelectedUser(isFollowing)
         })
         .catch((err) => {
-            console.log("ViewAllTweets getOneUser catch err: ", err)
+            console.log("FollowginFeed.jsx getCurrentUser catch err: ", err)
         })
-    }, [])
+    }, [currentUserId, otherUserId])
 
+    // useEffect get all users the other user is following, dependency otherUserId, otherUser
     useEffect(() => {
-        axios.get('http://localhost:8000/api/users')
+        axios.get(`http://localhost:8000/api/users/${otherUserId}`)
         .then((res) => {
-            console.log("ViewAllTweets getAllUsers then res.data: ", res.data)
+            console.log("FollowingFeed.jsx getOtherUser then res.data: ", res.data)
+            setOtherUser(res.data)
+        })
+        .catch((err) => {
+            console.log("FollowingFeed.jsx getOtherUser catch err: ", err)
+        })
+    }, [currentUserId, otherUserId, amIfollowingTheSelectedUser])
+
+    // get following feed
+    useEffect(() => {
+        console.log("FollowingFeed getFollowedAccounts")
+        axios.get('http://localhost:8000/api/users')
+        .then(res => {
+            console.log("FollowingFeed.jsx getFollowedAccounts then res.data: ", res.data)
             const allUsers = res.data
-            if(currentUser && currentUser.users_im_following) {
-                const all_users_im_following = allUsers.filter(user => currentUser.users_im_following.includes(user._id))
-                console.log("all users the current user is following: ", all_users_im_following)
-                setAllUsersImFollowing(all_users_im_following)
+            if(otherUser && otherUser.users_im_following) {
+                const all_users_the_other_user_is_following = allUsers.filter(user => otherUser.users_im_following.includes(user._id))
+                console.log("FollowingFeed.jsx all_users_the_other_user_is_following: ", all_users_the_other_user_is_following)
+                setAllUsersTheOtherUserIsFollowing(all_users_the_other_user_is_following)
             }
         })
-        .catch((err) => {
-            console.log("ViewAllTweets getAllUsers catch err: ", err)
-        },[])
-    }, [currentUser])
-    
-    const fetchTweets =  async () => {
+    }, [currentUserId,otherUser])
+
+    // fetch tweets
+    const fetchTweets = async () => {
         try {
+            // for loop filter by if the tweet user id or users that retweeted includes a followed user id
             const response = await axios.get('http://localhost:8000/api/tweets')
-            console.log("ViewAllTweets getAllTweets then res.data: ", response.data)
-            const tweetsSortedByNewest = response.data.sort((a, b) => {
+            const allTweets = []
+            console.log("FollowingFeed.jsx fetchTweets then response.data: ", response.data)
+            for (const followedUser of allUsersTheOtherUserIsFollowing) {
+                const tweetsAndRetweetsByUser = response.data.filter(tweet => tweet.user_id === followedUser._id || tweet.users_that_retweeted_this_tweet.includes(followedUser._id))
+                console.log("FollowingFeed.jsx fetchTweets tweetsAndRetweetsByUser: ", tweetsAndRetweetsByUser)
+                allTweets.push(...tweetsAndRetweetsByUser)
+            }
+            // remove duplicates
+            const uniqueTweetIds = new Set();
+            const uniqueTweets = allTweets.filter(tweet => {
+                if(!uniqueTweetIds.has(tweet._id)) {
+                    uniqueTweetIds.add(tweet._id);
+                    return true;
+                }
+                return false;
+            })
+            console.log("FollowingFeed.jsx fetchTweets allTweets", uniqueTweets)
+            const allTweetsAndRetweetsSortedByNewest = uniqueTweets.sort((a, b) => {
                 const dateA = new Date(a.createdAt)
                 const dateB = new Date(b.createdAt)
                 return dateB - dateA
             })
-            setAllTweetsSortedByNewest(tweetsSortedByNewest)
+            setAllTweetsSortedByNewest(allTweetsAndRetweetsSortedByNewest)
+            console.log("FollowingFeed.jsx fetchTweets allTweetsAndRetweetsSortedByNewest", allTweetsAndRetweetsSortedByNewest)
         }
         catch (err) {
-            console.log("ViewAllTweets getAllTweets catch err: ", err)
+            console.log("FollowingFeed fetchTweets catch err: ", err)
         }
     }
 
     useEffect(() => {
         fetchTweets();
-    }, []);
+    }, [currentUserId,otherUserId,allUsersTheOtherUserIsFollowing])
 
-    // BONUS: Image Popup feature
+    // openImage popup
     const openImage = (image_url) => {
         setImageURL(image_url)
+        console.log(image_url)
         setIsImagePopupOpen(true)
     }
 
+    // closeImage
     const closeImage = () => {
         setIsImagePopupOpen(false)
     }
 
-    // fetch the one tweet
-    const hoverOverTweetToEdit = (tweet) => {
+    // hoverOverTweetToEdit
+    const hoverOverTweetToEdit =  (tweet) => {
         setTweetToEdit(tweet)
         console.log("Tweet to edit: ", tweet)
     }
-    // BONUS: like feature
+
+    // likeTweet
     const likeTweet = async () => {
         try {
             const updatedTweet = {...tweetToEdit}
@@ -118,7 +146,8 @@ const ViewAllTweets = () => {
             fetchTweets()
         }
     }
-    // BONUS: dislike feature
+
+    // dislikeTweet
     const dislikeTweet = async () => {
         try {
             const updatedTweet = {...tweetToEdit}
@@ -149,7 +178,8 @@ const ViewAllTweets = () => {
             fetchTweets()
         }
     }
-    // BONUS: retweet feature
+
+    // retweetTweet
     const retweetTweet = () => {
         try {
             const updatedTweet = {...tweetToEdit}
@@ -176,22 +206,6 @@ const ViewAllTweets = () => {
             fetchTweets()
         }
     }
-    // BONUS: comments feature popup redirects to view_tweet
-    // const openCommentPopup = () => {
-    //     setIsCommentPopupOpen(true)
-    // }
-
-    // const handleCommentStateChange = (e) => {
-    //     setPendingComment({...pendingComment, [e.target.name]:e.target.value})
-    // }
-
-    // const submitComment = (tweetToEdit, currentUser) => {
-           // post request pendingComment with tweetToEdit info and currentUser info,
-        //    setComment res.data
-        // push to the comment_IDs of the tweetToEdit the comment._id
-        // set the comments_count to tweetToEdit.comment_IDs.length
-        // patch the tweet at tweetToEdit._id witth tweetToEdit
-    // }
 
     // logout
     const logout = () => {
@@ -204,64 +218,44 @@ const ViewAllTweets = () => {
                 console.log("ViewAllTweets logout catch err: ", err)
             })
     }
-    // toUserProfile
-    const toMyProfile = () => navigate(`/profiles/${currentUserId}/${currentUserId}`)
 
-    const toNewTweet = () => navigate(`/new_tweet/${currentUserId}`)
-
+    // toTweeterProfile
     const toTweeterProfile = (userId) => navigate(`/profiles/${currentUserId}/${userId}`)
 
+    // toTweet
     const toTweet = (tweetId) => navigate(`/view_tweet/${currentUserId}/${tweetId}`)
 
-    const toMyFeed = () => navigate(`/following_feed/${currentUserId}/${currentUserId}`)
+    // toHome
+    const toHome = () => navigate(`/all_tweets/${currentUserId}`)
+
+    // toNewTweet
+    const toNewTweet = () => navigate(`/new_tweet/${currentUserId}`)
 
     return (
-        // left column
-            // users im following side-bar:
-                // users image
-                // users name
-                // both link to that user's profile
-        // middle column
-            // all tweets with 
-                // user image and name and link to user profile /
-                // like button
-                // dislike button
-                // retweet button
-                // comments count
-                // view tweet button /
-        // right columns
-            // logout button /
-            // my profile with image and name and link to my profile /
-            //  new tweet link button /
         <div style={{fontFamily: 'arial'}}>
-            <h1 style={{backgroundColor: '#80aaff', marginBottom: '-20px', display: 'flex', justifyContent: 'center', color: 'white', textShadow: '0 0 5px gold'}}>BITTER HOME</h1>
+            {currentUserId == otherUserId && <h1 style={{backgroundColor: '#80aaff', marginBottom: '-20px', display: 'flex', justifyContent: 'center', color: 'white', textShadow: '0 0 5px gold'}}>My Feed</h1>}
+            {currentUserId !== otherUserId && <h1 style={{backgroundColor: '#80aaff', marginBottom: '-20px', display: 'flex', justifyContent: 'center', color: 'white', textShadow: '0 0 5px gold'}}>{otherUser.username}'s Feed</h1>}
             <div style={{backgroundColor: '#80aaff', height: '100%', width: '100%', display: 'flex', justifyContent: 'center'}}>
+                {/* left side column */}
                 <div style={{backgroundColor: 'white', width: '140px', marginRight: '50px', marginTop: '20px', borderRadius: '15px', border: '2px solid black', height: '500px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                    {/* left side bar */}
                     <p style={{color: 'blue'}}>Following</p>
-                    {allUsersImFollowing.map((user) => (
+                    {allUsersTheOtherUserIsFollowing.map((user) => (
                         <div key={user.Id}>
-                            <button style={{display: 'flex', backgroundColor: 'white', border: 'white', alignItems: 'center', flexDirection: 'column'}} onClick={() => toTweeterProfile(user._id)}>
+                            <button style={{display: 'flex', backgroundColor: 'white', border: 'white', alignItmes: 'center', flexDirection: 'column'}} onClick={() => toTweeterProfile(user._id)}>
                                 <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={user.user_image_url}/>
                                 <p style={{color: 'blue', fontSize: '20px'}}>{user.username}</p>
                             </button>
                         </div>
                     ))}
                 </div>
+                {/* middle column containing tweets */}
                 <div style={{width: '540px', marginRight: '50px', marginTop: '20px', borderRadius: '15px', display: 'flex', justifyContent: 'center', flexDirection: 'column'}}>
-                    {/* all tweets go here with:
-                        // user image and name and link to user profile /
-                        // like button
-                        // dislike button
-                        // retweet button
-                        // comments count
-                        // view tweet button /*/} 
-                        {allTweetsSortedByNewest.map((tweet) =>(
+                {allTweetsSortedByNewest.map((tweet) =>(
                             <div style={{backgroundColor: 'white', marginBottom: '30px', padding: '20px', borderRadius: '20px'}} key={tweet._id} onMouseOver={() => hoverOverTweetToEdit(tweet)}> {/*The tweet*/}
                                 <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '-20px'}}> {/*top row */}
                                     <button style={{display: 'flex', backgroundColor: 'white', border: 'white', alignItems: 'center'}} onClick={() => toTweeterProfile(tweet.user_id)}>
-                                        {tweet.user_id == currentUserId && <img style={{height: '40px', width: '40px', border: '2px solid gold', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
-                                        {tweet.user_id !== currentUserId && <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
+                                        {currentUserId == tweet.user_id ? <img style={{height: '40px', width: '40px', border: '2px solid gold', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/> :
+                                        <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
                                         <p style={{color: 'blue', fontSize: '30px'}}>{tweet.username}</p>
                                     </button>
                                     <button style={{height: '30px', borderRadius: '30px', marginTop: '20px', marginLeft: '20px', color: 'blue'}} onClick={() => toTweet(tweet._id)}>View Tweet</button>
@@ -387,7 +381,7 @@ const ViewAllTweets = () => {
                                             <img style={{height: "50px"}} src="https://cdn0.iconfinder.com/data/icons/twitter-ui-flat/48/Twitter_UI-13-512.png"/>
                                             <p>{tweet.retweets_count} Retweets</p>
                                         </div>
-                                        <button style={{display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'blue', backgroundColor: 'white', border: '0px'}} onClick={() => commentOnTweet() }>
+                                        <button style={{display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'blue', backgroundColor: 'white', border: '0px'}} onClick={() => openCommentPopup() }>
                                             <img style={{height: "50px"}} src="https://www.freeiconspng.com/thumbs/comment-png/comment-png-0.png"/>
                                             <p>{tweet.comments_count} Comments</p>
                                         </button>
@@ -416,20 +410,29 @@ const ViewAllTweets = () => {
                             </div>
                         ))}
                 </div>
-                {/* tweet comment popup window with form with validations*/}
-                <div style={{backgroundColor: 'white', width: '140px', height: '430px', display: 'flex', marginTop: '20px', borderRadius: '15px', border: '2px solid black', flexDirection: 'column', justifyContent: 'center'}}>
-                    <button style={{marginRight: 'auto', marginLeft: 'auto', marginTop: '-30px', marginBottom: '15px', width: '70px', height: '30px', color:'blue', borderRadius: '15px'}} onClick={() => logout()}>Log Out</button>
-                    <button  style={{backgroundColor: 'white', border: 'white', color: 'blue', fontSize: '20px' }} onClick={() => toMyProfile()}>
-                        <img style={{border: '5px solid gold', height: '90px', width: '90px', borderRadius: '50px', color: 'blue'}} src={currentUser.user_image_url}/>
-                        <p style={{}}>{currentUser.username}</p>
-                        <p>View Profile</p>
+                {/* right side column */}
+                <div style={{color: 'blue', backgroundColor: 'white', width: '140px', height: '450px', display: 'flex', marginTop: '20px', borderRadius: '15px', border: '2px solid black', flexDirection: 'column', alignItems: 'center'}}>                
+                {/* logout */}
+                    <button style={{marginBottom: '15px', marginTop: '20px', width: '70px', height: '30px', color:'blue', borderRadius: '15px'}} onClick={() => logout()}>Log Out</button>
+                {/* view profile button*/}
+                    <button  style={{backgroundColor: 'white', border: 'white', color: 'blue', fontSize: '20px', marginBottom: '-20px' }} onClick={() => toTweeterProfile(otherUserId)}>
+                        {currentUserId == otherUserId &&
+                                <img style={{border: '5px solid gold', height: '90px', width: '90px', borderRadius: '50px'}} src={otherUser.user_image_url}/>
+                            }
+                            {currentUserId !== otherUserId &&
+                                <img style={{border: '5px solid blue', height: '90px', width: '90px', borderRadius: '50px'}} src={otherUser.user_image_url}/>
+                            }
+                            <p>{otherUser.username}</p>
+                            <p>View Profile</p>
                     </button>
-                    <button style={{width: '100px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '30px', height: '30px', borderRadius: '20px', color: 'blue'}} onClick={() => toNewTweet()}>New Tweet</button>
-                    <button style={{width: '100px', marginLeft: 'auto', marginRight: 'auto', height: '30px', borderRadius: '20px', color: 'blue'}} onClick={() => toMyFeed()}>My Feed</button>
+                {/* CURRENT PLACE */}
+                {/* home button */}
+                    <button style={{marginBottom: '20px', width: '70px', height: '30px', color: 'blue', borderRadius: '15px', marginTop: '30px'}} onClick={() => toHome()}>Home</button>
+                    <button style={{width: '100px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px', height: '30px', borderRadius: '20px', color: 'blue'}} onClick={() => toNewTweet()}>New Tweet</button>
                 </div>
             </div>
         </div>
     )
 }
 
-export default ViewAllTweets
+export default FollowingFeed

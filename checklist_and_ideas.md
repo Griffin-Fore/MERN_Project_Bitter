@@ -1,33 +1,42 @@
 B I T T E R
 
 Presentation:
-    Register without picture /
-    Register with picture /
-    Login /
-    Like, dislike and retweet on the main page /
-    View my profile  /
-    unretweet a tweet /
-    Create a tweet /
-    Visit one of my tweets /
-    Edit one of my tweets /
-    Delete one of my tweets /
-    Create a new tweet /
-    Comment on one of my tweets with images /
-    edit my comment /
-    delete my comment /
-    View someone else's profile /
-    retweet, like and dislike one of their tweets /
-    View one of their tweets /
-    comment on the tweet with images /
-    Visit one of someone else's tweets I retweeted /
-    Like dislike and retweet /
-    comment with images /
-    Login as someone else /
-    Post a comment /
-    Edit a comment /
+    Register without picture 
+    Register with picture 
+    Login 
+    Like, dislike and retweet on the main page 
+    View my profile  
+    unretweet a tweet 
+    Create a tweet 
+    Visit one of my tweets 
+    Edit one of my tweets 
+    Delete one of my tweets 
+    Create a new tweet 
+    Comment on one of my tweets with images 
+    edit my comment 
+    delete my comment 
+    View someone else's profile 
+    retweet, like and dislike one of their tweets 
+    View one of their tweets 
+    comment on the tweet with images 
+    Visit one of someone else's tweets I retweeted 
+    Like dislike and retweet 
+    comment with images 
+    Login as someone else 
+    Post a comment 
+    Edit a comment 
     Delete a comment
-    Like and dislike someone else's comment /
-    Follow someone /
+    Like and dislike someone else's comment 
+    Follow someone 
+    View Following Feed
+
+Checklist: 
+Link to following feed in main page /
+Link to following feed in user page /
+Comments show newest first
+Current user has a gold border in main page tweets /
+Current user has a gold border in user page tweets /
+Current user has a gold border in feed tweets /
 
 Checklist of features:
 Pages:

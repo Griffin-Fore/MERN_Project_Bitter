@@ -4,6 +4,7 @@ import ViewAllTweets from './views/ViewAllTweets'
 import NewTweetPage from './views/NewTweetPage'
 import ViewOneTweet from './views/ViewOneTweet'
 import ViewUserProfile from './views/ViewUserProfile'
+import FollowingFeed from './views/FollowingFeed'
 import './App.css'
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
           <Route path="/new_tweet/:currentUserId" element={<NewTweetPage />} />
           <Route path="/view_tweet/:currentUserId/:tweetId" element={<ViewOneTweet />} />
           <Route path="/profiles/:currentUserId/:otherUserId" element={<ViewUserProfile />} />
-          {/* <Route path="/following_feed/:currentUserId/:otherUserId" element={<FollowingFeed />} /> */}
+          <Route path="/following_feed/:currentUserId/:otherUserId" element={<FollowingFeed />} />
         </Routes>
       </BrowserRouter>
     </>
