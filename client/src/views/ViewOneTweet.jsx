@@ -79,7 +79,7 @@ const ViewOneTweet = () => {
                 const allComments = res.data
                 const allCommentsForThisTweet = allComments.filter(comment => comment.tweet_id === tweetId)
                 const allCommentsForThisTweetSortedByNewest = allCommentsForThisTweet.sort((a, b) => 
-                new Date(b.date_added) - new Date(a.date_added))
+                new Date(b.date_added) - new Date(a.date_added)).reverse()
                 setAllCommentsForTheTweet(allCommentsForThisTweetSortedByNewest)
             })
             .catch((err) => {
@@ -428,7 +428,8 @@ const ViewOneTweet = () => {
                     <div style={{backgroundColor: 'white', marginBottom: '30px', padding: '20px', borderRadius: '20px', border: '2px solid black'}}> {/* The tweet*/}
                         <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '-20px'}}> {/*top row */}
                             <button style={{display: 'flex', backgroundColor: 'white', border: 'white', alignItems: 'center'}} onClick={() => toTweeterProfile(tweet.user_id)}>
-                                <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>
+                                {tweet.user_id == currentUserId && <img style={{height: '40px', width: '40px', border: '2px solid gold', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
+                                {tweet.user_id !== currentUserId && <img style={{height: '40px', width: '40px', border: '2px solid blue', borderRadius: '50px', marginRight: '10px'}} src={tweet.user_image_url}/>}
                                 <p style={{color: 'blue', fontSize: '30px'}}>{tweet.username}</p>
                             </button>
                             {tweet.user_id == currentUserId &&

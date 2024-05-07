@@ -28,7 +28,8 @@ Presentation:
     Delete a comment
     Like and dislike someone else's comment 
     Follow someone 
-    View Following Feed
+    View my Following Feed
+    View someone else's following feed
 
 Checklist: 
 Link to following feed in main page /
